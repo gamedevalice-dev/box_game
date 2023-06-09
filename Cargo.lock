@@ -805,22 +805,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy_ggrs_example"
-version = "0.6.0"
-dependencies = [
- "bevy",
- "bevy_ggrs",
- "bevy_matchbox",
- "bytemuck",
- "clap",
- "ggrs",
- "serde",
- "serde_qs",
- "wasm-bindgen",
- "web-sys",
-]
-
-[[package]]
 name = "bevy_gltf"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1408,6 +1392,22 @@ dependencies = [
  "fastrand",
  "futures-lite",
  "log",
+]
+
+[[package]]
+name = "box_game"
+version = "0.6.0"
+dependencies = [
+ "bevy",
+ "bevy_ggrs",
+ "bevy_matchbox",
+ "bytemuck",
+ "clap",
+ "ggrs",
+ "serde",
+ "serde_qs",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]

@@ -6,8 +6,8 @@ Shows how to use `matchbox_socket` with `bevy` and `ggrs` using `bevy_matchbox` 
 
 There is a live version here (move the cube with WASD):
 
-- 2-Player: <https://helsing.studio/box_game/>
-- 3-Player: <https://helsing.studio/box_game/?players=3>
+- 2-Player: <https://gamedevalice.github.io/box_game/>
+- 3-Player: <https://gamedevalice.github.io/box_game/?players=3>
 - N-player: Edit the link above.
 
 When enough players have joined, you should see a couple of boxes, one of which
@@ -18,7 +18,7 @@ You can open the browser console to get some rough idea about what's happening
 
 ## Instructions
 
-- Run the matchbox-provided [`matchbox_server`](../../matchbox_server/) ([help](../../matchbox_server/README.md)), or run your own on `ws://localhost:3536/`.
+- Run the matchbox-provided [`matchbox_server`](https://github.com/johanhelsing/matchbox/tree/main/matchbox_server), or run your own on `ws://localhost:3536/`.
 - Run the demo (enough clients must connect before the game stats)
   - [on Native](#run-on-native)
   - [on WASM](#run-on-wasm)
@@ -55,3 +55,28 @@ cargo run --target wasm32-unknown-unknown
 
 - Use a web browser and navigate to <http://127.0.0.1:1334/?players=2>
 - Open the console to see execution logs
+
+## Build for Github pages
+
+### Setup
+
+```sh
+rustup target add wasm32-unknown-unknown
+cargo install wasm-bindgen-cli
+cargo install wasm-opt
+cargo install basic-http-server
+```
+
+### Build
+
+```sh
+cargo build --profile wasm-release --target wasm32-unknown-unknown
+wasm-bindgen --out-name app --out-dir wasm --target web target/wasm32-unknown-unknown/wasm-release/box_game.wasm
+wasm-opt -Oz --output wasm/app_bg.wasm wasm/app_bg.wasm
+```
+
+### Test
+
+```
+basic-http-server -a 0.0.0.0:4000
+```

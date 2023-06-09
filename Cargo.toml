@@ -1,5 +1,5 @@
 [package]
-name = "bevy_ggrs_example"
+name = "box_game"
 version = "0.6.0"
 authors = ["Johan Helsing <johanhelsing@gmail.com>"]
 description = "A demo game where two web browser can connect and move boxes around"
@@ -38,3 +38,19 @@ bevy_ggrs = "0.12"
 bytemuck = { version = "1.7", features = ["derive"] }
 clap = { version = "4.0", features = ["derive"] }
 serde = "1.0"
+
+[profile.wasm-release]
+# Use release profile as default values
+inherits = "release"
+
+# Optimize with size in mind, also try "s", sometimes it is better.
+# This doesn't increase compilation times compared to -O3, great improvements
+opt-level = "z"
+
+# Do a second optimization pass removing duplicate or unused code from dependencies.
+# Slows compile times, marginal improvements
+lto = "fat"
+
+# When building crates, optimize larger chunks at a time
+# Slows compile times, marginal improvements
+codegen-units = 1
