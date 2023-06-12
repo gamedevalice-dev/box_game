@@ -44,8 +44,13 @@ pub struct BoxInput {
 #[derive(Default, Component)]
 pub struct Player {
     pub handle: usize,
-    pub highscore: usize,
-    pub score: usize,
+}
+
+#[derive(Default, Reflect, Component)]
+pub struct Score {
+    pub highscore: u32,
+    pub current: u32,
+    pub last_death_frame: u32,
 }
 
 // Marker component for Enemy
@@ -135,6 +140,7 @@ pub fn setup_scene_system(
             ..default()
         },
         Enemy,
+        Rollback::new(rip.next_id()),
     ));
 
     //score ui
@@ -200,6 +206,7 @@ pub fn setup_scene_system(
                 handle,
                 ..Default::default()
             },
+            Score::default(),
             Velocity::default(),
             // this component indicates bevy_GGRS that parts of this entity should be saved and
             // loaded
@@ -282,23 +289,23 @@ pub fn move_cube_system(
     }
 }
 
-pub struct PlayerScore {
+pub struct ScoreboardScore {
     player_number: usize,
-    highscore: usize,
-    score: usize,
+    highscore: u32,
+    score: u32,
 }
 
 pub fn update_scoreboard(
     mut text_query: Query<&mut Text, With<ScoreText>>,
-    player_query: Query<&Player>,
+    player_query: Query<(&Player, &Score)>,
 ) {
     // collect the scores and sort them
-    let mut player_scores = Vec::<PlayerScore>::new();
-    player_query.for_each(|player| {
-        player_scores.push(PlayerScore {
+    let mut player_scores = Vec::<ScoreboardScore>::new();
+    player_query.for_each(|(player, score)| {
+        player_scores.push(ScoreboardScore {
             player_number: player.handle + 1,
-            highscore: player.highscore,
-            score: player.score,
+            highscore: score.highscore,
+            score: score.current,
         });
     });
     player_scores.sort_by(|a, b| a.highscore.cmp(&b.highscore));
@@ -314,25 +321,29 @@ pub fn update_scoreboard(
     text_query.single_mut().sections[0].value = str;
 }
 
-pub fn increment_scores(mut player_query: Query<&mut Player>) {
-    player_query.for_each_mut(|mut player| {
-        player.score += 1;
-        if player.score > player.highscore {
-            player.highscore = player.score;
+pub fn update_scores(
+    mut player_query: Query<(&mut Score, &Transform), (With<Player>, Without<Enemy>)>,
+    enemy_query: Query<&Transform, (With<Enemy>, Without<Player>)>,
+    frame_count: Res<FrameCount>
+) {
+    //increment current score
+    player_query.for_each_mut(|(mut score, _)| {
+        score.current = frame_count.frame - score.last_death_frame;
+        if score.current > score.highscore {
+            score.highscore = score.current;
         }
     });
-}
 
-pub fn trigger_death(
-    mut player_query: Query<(&mut Player, &mut Transform), Without<Enemy>>,
-    mut enemy_query: Query<&Transform, (With<Enemy>, Without<Player>)>,
-) {
-    player_query.for_each_mut(|(mut player, mut player_transform)| {
-        enemy_query.for_each(|enemy_transform|{
-            let distance = player_transform.translation.distance(enemy_transform.translation);
+    //trigger death
+    player_query.for_each_mut(|(mut score, player_transform)| {
+        enemy_query.for_each(|enemy_transform| {
+            let distance = player_transform
+                .translation
+                .distance(enemy_transform.translation);
             if distance <= ENEMY_RADIUS + CUBE_SIZE / 2. {
-                player.score = 0;
+                score.last_death_frame = frame_count.frame;
             }
         });
     });
+
 }

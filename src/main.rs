@@ -36,6 +36,7 @@ fn main() {
         // register types of components AND resources you want to be rolled back
         .register_rollback_component::<Transform>()
         .register_rollback_component::<Velocity>()
+        .register_rollback_component::<Score>()
         .register_rollback_resource::<FrameCount>()
         // make it happen in the bevy app
         .build(&mut app);
@@ -64,11 +65,16 @@ fn main() {
         .add_system(lobby_cleanup.in_schedule(OnExit(AppState::Lobby)))
         .add_system(setup_scene_system.in_schedule(OnEnter(AppState::InGame)))
         .add_system(update_scoreboard.in_set(OnUpdate(AppState::InGame)))
-        .add_system(increment_scores.in_set(OnUpdate(AppState::InGame)))
-        .add_system(trigger_death.in_set(OnUpdate(AppState::InGame)))
         .add_system(log_ggrs_events.in_set(OnUpdate(AppState::InGame)))
         // these systems will be executed as part of the advance frame update
-        .add_systems((move_cube_system, increase_frame_system).in_schedule(GGRSSchedule))
+        .add_systems(
+            (
+                move_cube_system,
+                increase_frame_system,
+                update_scores,
+            )
+                .in_schedule(GGRSSchedule),
+        )
         .run();
 }
 
