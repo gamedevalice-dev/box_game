@@ -139,6 +139,7 @@ pub fn setup_scene_system(
             },
             ..default()
         },
+        Velocity::default(),
         Enemy,
         Rollback::new(rip.next_id()),
     ));
@@ -289,6 +290,68 @@ pub fn move_cube_system(
     }
 }
 
+pub fn move_enemy_system(
+    mut enemy_query: Query<
+        (&mut Transform, &mut Velocity, &Enemy),
+        (With<Rollback>, Without<Player>),
+    >, 
+    player_query: Query<(&Transform, &Score, &Player), (With<Rollback>, Without<Enemy>)>,
+) {
+    for (mut t, mut v, _) in enemy_query.iter_mut() {
+        let enemy_position = t.translation;
+        let mut highscore_beating_player_position = Vec3::default();
+        let mut nearest_target_position = Vec3{x: f32::INFINITY, y: f32::INFINITY, z: f32::INFINITY};
+        let mut is_highscore_beating_player = false;
+
+        for (player_transform, player_score, _) in player_query.iter() {
+            //get nearest player position
+            let nearest_target_distance = enemy_position.distance(nearest_target_position);
+            let player_distance = enemy_position.distance(player_transform.translation);
+            if player_distance < nearest_target_distance {
+                nearest_target_position = player_transform.translation;
+            }
+            //get "highscore beating" player position
+            if player_score.current > player_score.highscore {
+                highscore_beating_player_position = player_transform.translation;
+                is_highscore_beating_player = true;
+            }
+        }
+
+        //position that the enemy will apply velocity toward
+        let target_position = if is_highscore_beating_player {
+            highscore_beating_player_position
+        } else {
+            nearest_target_position
+        };
+
+        //apply velocity
+        let direction = (target_position - enemy_position).normalize_or_zero();
+        let movement_vector = direction * MOVEMENT_SPEED;
+        v.x += movement_vector.x;
+        v.y += movement_vector.y;
+        v.z += movement_vector.z;
+
+        // constrain velocity
+        let mag = (v.x * v.x + v.y * v.y + v.z * v.z).sqrt();
+        if mag > MAX_SPEED {
+            let factor = MAX_SPEED / mag;
+            v.x *= factor;
+            v.y *= factor;
+            v.z *= factor;
+        }
+
+        // apply velocity
+        t.translation.x += v.x;
+        t.translation.y += v.y;
+        t.translation.z += v.z;
+
+        // constrain enemy to plane
+        t.translation.x = t.translation.x.max(-1. * (PLANE_SIZE - CUBE_SIZE) * 0.5);
+        t.translation.x = t.translation.x.min((PLANE_SIZE - CUBE_SIZE) * 0.5);
+        t.translation.z = t.translation.z.max(-1. * (PLANE_SIZE - CUBE_SIZE) * 0.5);
+        t.translation.z = t.translation.z.min((PLANE_SIZE - CUBE_SIZE) * 0.5);
+    }
+}
 pub struct ScoreboardScore {
     player_number: usize,
     highscore: u32,
@@ -324,16 +387,8 @@ pub fn update_scoreboard(
 pub fn update_scores(
     mut player_query: Query<(&mut Score, &Transform), (With<Player>, Without<Enemy>)>,
     enemy_query: Query<&Transform, (With<Enemy>, Without<Player>)>,
-    frame_count: Res<FrameCount>
+    frame_count: Res<FrameCount>,
 ) {
-    //increment current score
-    player_query.for_each_mut(|(mut score, _)| {
-        score.current = frame_count.frame - score.last_death_frame;
-        if score.current > score.highscore {
-            score.highscore = score.current;
-        }
-    });
-
     //trigger death
     player_query.for_each_mut(|(mut score, player_transform)| {
         enemy_query.for_each(|enemy_transform| {
@@ -346,4 +401,11 @@ pub fn update_scores(
         });
     });
 
+    //increment current score
+    player_query.for_each_mut(|(mut score, _)| {
+        score.current = frame_count.frame - score.last_death_frame;
+        if score.current > score.highscore {
+            score.highscore = score.current;
+        }
+    });
 }

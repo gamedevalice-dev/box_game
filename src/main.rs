@@ -69,10 +69,12 @@ fn main() {
         // these systems will be executed as part of the advance frame update
         .add_systems(
             (
-                move_cube_system,
                 increase_frame_system,
+                move_cube_system,
+                move_enemy_system,
                 update_scores,
             )
+                .chain()
                 .in_schedule(GGRSSchedule),
         )
         .run();
