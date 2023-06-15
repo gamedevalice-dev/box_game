@@ -38,6 +38,7 @@ bevy_ggrs = "0.12"
 bytemuck = { version = "1.7", features = ["derive"] }
 clap = { version = "4.0", features = ["derive"] }
 serde = "1.0"
+rand = "0.8"
 
 [profile.wasm-release]
 # Use release profile as default values

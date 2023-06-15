@@ -3,7 +3,7 @@ use bevy_ggrs::{PlayerInputs, Rollback, RollbackIdProvider, Session};
 use bevy_matchbox::prelude::*;
 use bytemuck::{Pod, Zeroable};
 use ggrs::{Config, PlayerHandle};
-use std::hash::Hash;
+use std::{hash::Hash, ops::Mul};
 
 const BLUE: Color = Color::rgb(0.8, 0.6, 0.2);
 const ORANGE: Color = Color::rgb(0., 0.35, 0.8);
@@ -303,6 +303,7 @@ pub fn move_enemy_system(
         let mut nearest_target_position = Vec3{x: f32::INFINITY, y: f32::INFINITY, z: f32::INFINITY};
         let mut is_highscore_beating_player = false;
 
+        let mut top_score = 0;
         for (player_transform, player_score, _) in player_query.iter() {
             //get nearest player position
             let nearest_target_distance = enemy_position.distance(nearest_target_position);
@@ -315,6 +316,10 @@ pub fn move_enemy_system(
                 highscore_beating_player_position = player_transform.translation;
                 is_highscore_beating_player = true;
             }
+            //set top_score
+            if player_score.highscore > top_score {
+                top_score = player_score.highscore;
+            }
         }
 
         //position that the enemy will apply velocity toward
@@ -322,7 +327,7 @@ pub fn move_enemy_system(
             highscore_beating_player_position
         } else {
             nearest_target_position
-        };
+        }; 
 
         //apply velocity
         let direction = (target_position - enemy_position).normalize_or_zero();
@@ -331,10 +336,16 @@ pub fn move_enemy_system(
         v.y += movement_vector.y;
         v.z += movement_vector.z;
 
+        let mut speed_multiplier = 0.001 * top_score as f32;
+        let speed_limit = 10.0;
+        if speed_multiplier > speed_limit {
+            speed_multiplier = speed_limit;
+        }
+
         // constrain velocity
         let mag = (v.x * v.x + v.y * v.y + v.z * v.z).sqrt();
-        if mag > MAX_SPEED {
-            let factor = MAX_SPEED / mag;
+        if mag > MAX_SPEED * speed_multiplier {
+            let factor = (MAX_SPEED / mag) * speed_multiplier;
             v.x *= factor;
             v.y *= factor;
             v.z *= factor;
@@ -406,6 +417,30 @@ pub fn update_scores(
         score.current = frame_count.frame - score.last_death_frame;
         if score.current > score.highscore {
             score.highscore = score.current;
+        }
+    });
+}
+
+pub fn respawn_player(
+    mut player_query: Query<(&Score, &mut Transform), (With<Player>, Without<Enemy>)>,
+    frame_count: Res<FrameCount>,
+) {
+    player_query.for_each_mut(|(score, mut player_transform)| {
+        //player died
+        if score.current == 0 {
+
+            //create a random position along a circle
+            let radius = PLANE_SIZE / 2.;
+            let possible_positions = 100;
+            let random_value = (frame_count.frame % possible_positions) as f32;
+            let rot = random_value as f32 / possible_positions as f32 * 2. * std::f32::consts::PI;
+            let x = radius * rot.cos();
+            let z = radius * rot.sin();
+
+            //set the position
+            player_transform.translation.x = x;
+            player_transform.translation.y = CUBE_SIZE / 2.;
+            player_transform.translation.z = z;
         }
     });
 }

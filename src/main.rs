@@ -73,6 +73,7 @@ fn main() {
                 move_cube_system,
                 move_enemy_system,
                 update_scores,
+                respawn_player,
             )
                 .chain()
                 .in_schedule(GGRSSchedule),

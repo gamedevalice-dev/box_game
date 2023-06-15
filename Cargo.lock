@@ -1404,6 +1404,7 @@ dependencies = [
  "bytemuck",
  "clap",
  "ggrs",
+ "rand",
  "serde",
  "serde_qs",
  "wasm-bindgen",
