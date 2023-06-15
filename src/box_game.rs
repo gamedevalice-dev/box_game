@@ -10,6 +10,7 @@ const ORANGE: Color = Color::rgb(0., 0.35, 0.8);
 const MAGENTA: Color = Color::rgb(0.9, 0.2, 0.2);
 const GREEN: Color = Color::rgb(0.35, 0.7, 0.35);
 const PLAYER_COLORS: [Color; 4] = [BLUE, ORANGE, MAGENTA, GREEN];
+const PLAYER_NAMES: [&str; 4] = ["BLUE", "ORANGE", "MAGENTA", "GREEN"];
 
 const INPUT_UP: u8 = 1 << 0;
 const INPUT_DOWN: u8 = 1 << 1;
@@ -148,7 +149,7 @@ pub fn setup_scene_system(
     commands
         .spawn(NodeBundle {
             style: Style {
-                size: Size::new(Val::Percent(15.0), Val::Percent(30.0)),
+                size: Size::new(Val::Percent(15.0), Val::Percent(100.0)),
                 position_type: PositionType::Absolute,
                 justify_content: JustifyContent::Start,
                 align_items: AlignItems::Start,
@@ -169,7 +170,7 @@ pub fn setup_scene_system(
                         "Scores",
                         TextStyle {
                             font: asset_server.load("fonts/quicksand-light.ttf"),
-                            font_size: 16.,
+                            font_size: 24.,
                             color: Color::BLACK,
                         },
                     ),
@@ -337,7 +338,7 @@ pub fn move_enemy_system(
         v.z += movement_vector.z;
 
         let mut speed_multiplier = 0.001 * top_score as f32;
-        let speed_limit = 10.0;
+        let speed_limit = 2.0;
         if speed_multiplier > speed_limit {
             speed_multiplier = speed_limit;
         }
@@ -364,7 +365,7 @@ pub fn move_enemy_system(
     }
 }
 pub struct ScoreboardScore {
-    player_number: usize,
+    player_name: String,
     highscore: u32,
     score: u32,
 }
@@ -377,20 +378,21 @@ pub fn update_scoreboard(
     let mut player_scores = Vec::<ScoreboardScore>::new();
     player_query.for_each(|(player, score)| {
         player_scores.push(ScoreboardScore {
-            player_number: player.handle + 1,
+            player_name: PLAYER_NAMES[player.handle % PLAYER_NAMES.len()].to_string(),
             highscore: score.highscore,
             score: score.current,
         });
     });
     player_scores.sort_by(|a, b| a.highscore.cmp(&b.highscore));
+    player_scores.reverse();
 
     // create the scoreboard string
     let mut str = String::new();
     for player_score in player_scores {
-        let player_number = player_score.player_number;
+        let player_name = player_score.player_name;
         let highscore = player_score.highscore;
         let score = player_score.score;
-        str += &format!("Player {player_number}: {highscore} ({score})\n",);
+        str += &format!("{player_name}\nHighscore: {highscore}\nScore: {score}\n\n",);
     }
     text_query.single_mut().sections[0].value = str;
 }
