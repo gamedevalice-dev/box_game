@@ -80,3 +80,12 @@ wasm-opt -Oz --output docs/wasm/app_bg.wasm docs/wasm/app_bg.wasm
 ```
 basic-http-server -a 0.0.0.0:4000
 ```
+
+### Running matchbox_server Dockerfile
+
+```sh
+docker build .
+docker images
+docker network create --subnet=172.18.0.0/16 network_name
+docker run -it --net network_name --ip 172.18.0.2 b5cd7cdc2ef7
+```
