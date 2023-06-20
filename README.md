@@ -86,6 +86,5 @@ basic-http-server -a 0.0.0.0:4000
 ```sh
 docker build .
 docker images
-docker network create --subnet=172.18.0.0/16 network_name
-docker run -it --net network_name --ip 172.18.0.2 b5cd7cdc2ef7
+docker run -it -p 3536:3536 b5cd7cdc2ef7
 ```
