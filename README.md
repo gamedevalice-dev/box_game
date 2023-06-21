@@ -84,7 +84,8 @@ basic-http-server -a 0.0.0.0:4000
 ### Running matchbox_server Dockerfile
 
 ```sh
-docker build .
+docker build . -t gamedevalice/matchbox_server:v1.0.0
 docker images
-docker run -it -p 3536:3536 b5cd7cdc2ef7
+docker run -it -p 3536:3536 gamedevalice/matchbox_server:v1.0.0
+docker push gamedevalice/matchbox_server:v1.0.0
 ```
