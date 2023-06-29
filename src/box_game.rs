@@ -295,13 +295,17 @@ pub fn move_enemy_system(
     mut enemy_query: Query<
         (&mut Transform, &mut Velocity, &Enemy),
         (With<Rollback>, Without<Player>),
-    >, 
+    >,
     player_query: Query<(&Transform, &Score, &Player), (With<Rollback>, Without<Enemy>)>,
 ) {
     for (mut t, mut v, _) in enemy_query.iter_mut() {
         let enemy_position = t.translation;
         let mut highscore_beating_player_position = Vec3::default();
-        let mut nearest_target_position = Vec3{x: f32::INFINITY, y: f32::INFINITY, z: f32::INFINITY};
+        let mut nearest_target_position = Vec3 {
+            x: f32::INFINITY,
+            y: f32::INFINITY,
+            z: f32::INFINITY,
+        };
         let mut is_highscore_beating_player = false;
 
         let mut top_score = 0;
@@ -328,7 +332,7 @@ pub fn move_enemy_system(
             highscore_beating_player_position
         } else {
             nearest_target_position
-        }; 
+        };
 
         //apply velocity
         let direction = (target_position - enemy_position).normalize_or_zero();
@@ -430,7 +434,6 @@ pub fn respawn_player(
     player_query.for_each_mut(|(score, mut player_transform)| {
         //player died
         if score.current == 0 {
-
             //create a random position along a circle
             let radius = PLANE_SIZE / 2.;
             let possible_positions = 100;
