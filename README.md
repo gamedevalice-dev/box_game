@@ -73,6 +73,7 @@ cargo install basic-http-server
 cargo build --profile wasm-release --target wasm32-unknown-unknown
 wasm-bindgen --out-name app --out-dir docs/wasm --target web target/wasm32-unknown-unknown/wasm-release/box_game.wasm
 wasm-opt -Oz --output docs/wasm/app_bg.wasm docs/wasm/app_bg.wasm
+cp -r -Force assets/ docs/
 ```
 
 ### Test
